@@ -36,6 +36,10 @@ type ObjectMeta struct {
 	// 由域名DNS_LABEL组成，最长128字节
 	// 不允许更新
 	Name string `json:"name,omitempty"`
+	// GenerateName is an optional prefix, used by the server, to generate a unique
+	// name ONLY IF the Name field has not been provided.
+	// Applied only if Name is not specified.
+	GenerateName string `json:"generate_name,omitempty"`
 	// 命名空间，默认default
 	// 由域名DNS_LABEL组成，不允许更新
 	Namespace string `json:"namespace,omitempty"`
