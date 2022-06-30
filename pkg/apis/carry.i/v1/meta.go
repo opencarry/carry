@@ -11,6 +11,10 @@ type TypeMeta struct {
 	APIVersion string `json:"api_version,omitempty"`
 }
 
+func (t *TypeMeta) GetObjectKind() string {
+	return t.Kind
+}
+
 type ListMeta struct {
 	// etcd ModRevision
 	ResourceVersion string `json:"resource_version,omitempty"`
@@ -19,6 +23,13 @@ type ListMeta struct {
 	// 剩余条数
 	RemainingItemCount *int64 `json:"remaining_item_count,omitempty"`
 }
+
+func (l *ListMeta) GetResourceVersion() string        { return l.ResourceVersion }
+func (l *ListMeta) SetResourceVersion(version string) { l.ResourceVersion = version }
+func (l *ListMeta) GetContinue() string               { return l.Continue }
+func (l *ListMeta) SetContinue(c string)              { l.Continue = c }
+func (l *ListMeta) GetRemainingItemCount() *int64     { return l.RemainingItemCount }
+func (l *ListMeta) SetRemainingItemCount(c *int64)    { l.RemainingItemCount = c }
 
 type ObjectMeta struct {
 	// 资源名称，在命令空间下唯一
@@ -63,6 +74,21 @@ type ObjectMeta struct {
 	// 不允许更新
 	UID UID `json:"uid,omitempty"`
 }
+
+func (meta *ObjectMeta) GetNamespace() string                         { return meta.Namespace }
+func (meta *ObjectMeta) SetNamespace(namespace string)                { meta.Namespace = namespace }
+func (meta *ObjectMeta) GetName() string                              { return meta.Name }
+func (meta *ObjectMeta) SetName(name string)                          { meta.Name = name }
+func (meta *ObjectMeta) GetUID() UID                                  { return meta.UID }
+func (meta *ObjectMeta) SetUID(uid UID)                               { meta.UID = uid }
+func (meta *ObjectMeta) GetResourceVersion() string                   { return meta.ResourceVersion }
+func (meta *ObjectMeta) SetResourceVersion(version string)            { meta.ResourceVersion = version }
+func (meta *ObjectMeta) GetCreationTime() time.Time                   { return meta.CreationTime }
+func (meta *ObjectMeta) SetCreationTime(creationTime time.Time)       { meta.CreationTime = creationTime }
+func (meta *ObjectMeta) GetLabels() map[string]string                 { return meta.Labels }
+func (meta *ObjectMeta) SetLabels(labels map[string]string)           { meta.Labels = labels }
+func (meta *ObjectMeta) GetAnnotations() map[string]string            { return meta.Annotations }
+func (meta *ObjectMeta) SetAnnotations(annotations map[string]string) { meta.Annotations = annotations }
 
 type OwnerReference struct {
 	APIVersion string `json:"api_version"`

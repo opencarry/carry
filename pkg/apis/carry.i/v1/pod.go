@@ -86,8 +86,8 @@ const (
 )
 
 type PodSecurityContext struct {
-	RunAsUser    *int64 `json:"run_as_user,omitempty"`
-	RunAsGroup   *int64 `json:"run_as_group,omitempty"`
+	RunAsUser    string `json:"run_as_user,omitempty"`
+	RunAsGroup   string `json:"run_as_group,omitempty"`
 	RunAsNonRoot *bool  `json:"run_as_non_root,omitempty"`
 }
 
@@ -97,7 +97,7 @@ type Container struct {
 	// mountain image name
 	Image string `json:"image"`
 	// Defaults to always if :latest tag is specified, or if_not_present otherwise
-	ImagePullPolicy string `json:"image_pull_policy,omitempty"`
+	ImagePullPolicy PullPolicy `json:"image_pull_policy,omitempty"`
 	// 部署目录，绝对路径
 	ImageDeploymentDir string `json:"image_deployment_dir"`
 
@@ -120,6 +120,15 @@ type Container struct {
 	Resources ResourceRequirements `json:"resources,omitempty"`
 }
 
+// PullPolicy describes a policy for if/when to pull a container image
+type PullPolicy string
+
+const (
+	PullAlways       PullPolicy = "always"
+	PullNever        PullPolicy = "never"
+	PullIfNotPresent PullPolicy = "if_not_present"
+)
+
 type EnvVar struct {
 	Name      string        `json:"name"`
 	Value     string        `json:"value,omitempty"`
@@ -135,7 +144,7 @@ type ObjectFieldSelector struct {
 }
 
 type SecurityContext struct {
-	RunAsUser *int64 `json:"run_as_user,omitempty"`
+	RunAsUser string `json:"run_as_user,omitempty"`
 }
 
 type ContainerPort struct {

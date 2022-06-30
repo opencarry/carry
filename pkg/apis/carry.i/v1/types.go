@@ -1,6 +1,6 @@
 package v1
 
-import "k8s.io/apimachinery/pkg/api/resource"
+import "github.com/opencarry/carry/pkg/resource"
 
 type ResourceName string
 
@@ -12,6 +12,22 @@ const (
 )
 
 type ResourceList map[ResourceName]resource.Quantity
+
+// Cpu Returns the CPU limit if specified.
+func (rl *ResourceList) Cpu() *resource.Quantity {
+	if val, ok := (*rl)[ResourceCPU]; ok {
+		return &val
+	}
+	return &resource.Quantity{}
+}
+
+// Memory Returns the Memory limit if specified.
+func (rl *ResourceList) Memory() *resource.Quantity {
+	if val, ok := (*rl)[ResourceMemory]; ok {
+		return &val
+	}
+	return &resource.Quantity{}
+}
 
 type ResourceRequirements struct {
 	Limits   ResourceList `json:"limits,omitempty"`
@@ -73,4 +89,16 @@ type ObjectReference struct {
 	// index 2 in this pod). This syntax is chosen only to have some well-defined way of
 	// referencing a part of an object.
 	FieldPath string `json:"field_path,omitempty"`
+}
+
+func (o ObjectReference) GetObjectKind() string {
+	return o.Kind
+}
+
+type Binding struct {
+	TypeMeta   `json:",inline"`
+	ObjectMeta `json:"metadata,omitempty"`
+
+	PodID string `json:"pod_id"`
+	Host  string `json:"host"`
 }
