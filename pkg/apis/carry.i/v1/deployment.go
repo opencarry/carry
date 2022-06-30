@@ -27,7 +27,7 @@ type DeploymentSpec struct {
 	Template PodTemplateSpec `json:"template"`
 	// optional, defaults to 1
 	Replicas *int64 `json:"replicas,omitempty"`
-	// The deployment strategy to use to replace existing pods with new ones.
+	// The deployment strategy to use to replace existing pods.
 	Strategy DeploymentStrategy `json:"strategy,omitempty"`
 	// optional, defaults to 10
 	RevisionHistoryLimit *int64 `json:"revision_history_limit,omitempty"`
@@ -43,6 +43,7 @@ type DeploymentStrategy struct {
 type DeploymentStrategyType string
 
 const (
+	// InplaceUpdateDeploymentStrategyType 原地升级，当template有变动，直接将变动同步到对应的Pod，不创建新的Pod
 	InplaceUpdateDeploymentStrategyType DeploymentStrategyType = "inplace_update"
 )
 
