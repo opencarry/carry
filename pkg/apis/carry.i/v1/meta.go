@@ -2,6 +2,58 @@ package v1
 
 import "time"
 
+type ObjectMetaAccessor interface {
+	GetObjectMeta() Object
+}
+
+type Object interface {
+	GetNamespace() string
+	SetNamespace(namespace string)
+	GetName() string
+	SetName(name string)
+	GetGenerateName() string
+	SetGenerateName(name string)
+	GetUID() UID
+	SetUID(uid UID)
+	GetResourceVersion() string
+	SetResourceVersion(version string)
+	GetCreationTime() time.Time
+	SetCreationTime(time time.Time)
+	GetDeletionTime() time.Time
+	SetDeletionTime(time time.Time)
+	GetDeletionGracePeriodSeconds() *int64
+	SetDeletionGracePeriodSeconds(*int64)
+	GetLabels() map[string]string
+	SetLabels(labels map[string]string)
+	GetAnnotations() map[string]string
+	SetAnnotations(annotations map[string]string)
+	GetOwnerReferences() []OwnerReference
+	SetOwnerReferences([]OwnerReference)
+}
+
+type ListMetaAccessor interface {
+	GetListMeta() ListInterface
+}
+
+type Common interface {
+	GetResourceVersion() string
+	SetResourceVersion(version string)
+}
+
+type ListInterface interface {
+	GetResourceVersion() string
+	SetResourceVersion(version string)
+	GetContinue() string
+	SetContinue(c string)
+}
+
+type Type interface {
+	GetAPIVersion() string
+	SetAPIVersion(version string)
+	GetKind() string
+	SetKind(kind string)
+}
+
 type UID string
 
 type TypeMeta struct {
@@ -23,6 +75,8 @@ type ListMeta struct {
 	// 剩余条数
 	RemainingItemCount *int64 `json:"remaining_item_count,omitempty"`
 }
+
+func (l *ListMeta) GetListMeta() ListInterface { return l }
 
 func (l *ListMeta) GetResourceVersion() string        { return l.ResourceVersion }
 func (l *ListMeta) SetResourceVersion(version string) { l.ResourceVersion = version }
@@ -79,20 +133,62 @@ type ObjectMeta struct {
 	UID UID `json:"uid,omitempty"`
 }
 
+func (meta *ObjectMeta) GetObjectMeta() Object { return meta }
+
 func (meta *ObjectMeta) GetNamespace() string                         { return meta.Namespace }
 func (meta *ObjectMeta) SetNamespace(namespace string)                { meta.Namespace = namespace }
 func (meta *ObjectMeta) GetName() string                              { return meta.Name }
 func (meta *ObjectMeta) SetName(name string)                          { meta.Name = name }
+func (meta *ObjectMeta) GetGenerateName() string                      { return meta.GenerateName }
+func (meta *ObjectMeta) SetGenerateName(name string)                  { meta.GenerateName = name }
 func (meta *ObjectMeta) GetUID() UID                                  { return meta.UID }
 func (meta *ObjectMeta) SetUID(uid UID)                               { meta.UID = uid }
 func (meta *ObjectMeta) GetResourceVersion() string                   { return meta.ResourceVersion }
 func (meta *ObjectMeta) SetResourceVersion(version string)            { meta.ResourceVersion = version }
 func (meta *ObjectMeta) GetCreationTime() time.Time                   { return meta.CreationTime }
 func (meta *ObjectMeta) SetCreationTime(creationTime time.Time)       { meta.CreationTime = creationTime }
+func (meta *ObjectMeta) GetDeletionTime() time.Time                   { return meta.DeletionTime }
+func (meta *ObjectMeta) SetDeletionTime(deletionTime time.Time)       { meta.DeletionTime = deletionTime }
 func (meta *ObjectMeta) GetLabels() map[string]string                 { return meta.Labels }
 func (meta *ObjectMeta) SetLabels(labels map[string]string)           { meta.Labels = labels }
 func (meta *ObjectMeta) GetAnnotations() map[string]string            { return meta.Annotations }
 func (meta *ObjectMeta) SetAnnotations(annotations map[string]string) { meta.Annotations = annotations }
+func (meta *ObjectMeta) GetDeletionGracePeriodSeconds() *int64 {
+	return meta.DeletionGracePeriodSeconds
+}
+func (meta *ObjectMeta) SetDeletionGracePeriodSeconds(deletionGracePeriodSeconds *int64) {
+	meta.DeletionGracePeriodSeconds = deletionGracePeriodSeconds
+}
+
+func (meta *ObjectMeta) GetOwnerReferences() []OwnerReference {
+	ret := make([]OwnerReference, len(meta.OwnerReferences))
+	for i := 0; i < len(meta.OwnerReferences); i++ {
+		ret[i].Kind = meta.OwnerReferences[i].Kind
+		ret[i].Name = meta.OwnerReferences[i].Name
+		ret[i].UID = meta.OwnerReferences[i].UID
+		ret[i].APIVersion = meta.OwnerReferences[i].APIVersion
+		if meta.OwnerReferences[i].Controller != nil {
+			value := *meta.OwnerReferences[i].Controller
+			ret[i].Controller = &value
+		}
+	}
+	return ret
+}
+
+func (meta *ObjectMeta) SetOwnerReferences(references []OwnerReference) {
+	newReferences := make([]OwnerReference, len(references))
+	for i := 0; i < len(references); i++ {
+		newReferences[i].Kind = references[i].Kind
+		newReferences[i].Name = references[i].Name
+		newReferences[i].UID = references[i].UID
+		newReferences[i].APIVersion = references[i].APIVersion
+		if references[i].Controller != nil {
+			value := *references[i].Controller
+			newReferences[i].Controller = &value
+		}
+	}
+	meta.OwnerReferences = newReferences
+}
 
 type OwnerReference struct {
 	APIVersion string `json:"api_version"`
