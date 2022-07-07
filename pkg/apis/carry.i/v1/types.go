@@ -2,6 +2,13 @@ package v1
 
 import "github.com/opencarry/carry/pkg/resource"
 
+const (
+	DefaultTerminationGracePeriodSeconds = 30
+
+	// DefaultSchedulerName "default-scheduler" is the name of default scheduler.
+	DefaultSchedulerName = "default-scheduler"
+)
+
 type ResourceName string
 
 const (

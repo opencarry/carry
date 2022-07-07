@@ -75,6 +75,9 @@ type PodSpec struct {
 	// 如果想停止Pod，将此值置为true，默认为false
 	// carry 感知到此值为true后，将Pod中所有容器停止
 	Suspended *bool `json:"suspended,omitempty"`
+
+	// 可选，默认 default-scheduler
+	SchedulerName string `json:"scheduler_name,omitempty"`
 }
 
 type RestartPolicy string
