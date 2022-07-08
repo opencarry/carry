@@ -5,6 +5,12 @@ import "github.com/opencarry/carry/pkg/resource"
 const (
 	DefaultTerminationGracePeriodSeconds = 30
 
+	DefaultActiveDeadlineSeconds = 36000
+
+	DefaultSuspended = false
+
+	ConfigMapVolumeSourceDefaultMode int64 = 0644
+
 	// DefaultSchedulerName "default-scheduler" is the name of default scheduler.
 	DefaultSchedulerName = "default-scheduler"
 )

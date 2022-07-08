@@ -20,11 +20,11 @@ type JobList struct {
 
 type JobSpec struct {
 	// Specifies the number of retries before marking this job failed. Defaults to 6
-	BackoffLimit *int `json:"backoff_limit,omitempty"`
+	BackoffLimit *int64 `json:"backoff_limit,omitempty"`
 
-	Completions *int `json:"completions,omitempty"`
+	Completions *int64 `json:"completions,omitempty"`
 
-	Parallelism *int `json:"parallelism,omitempty"`
+	Parallelism *int64 `json:"parallelism,omitempty"`
 	// Specifies the duration in seconds relative to the startTime that the job may be continuously active
 	// before the system tries to terminate it; value must be positive integer.
 	ActiveDeadlineSeconds *int64 `json:"active_deadline_seconds,omitempty"`
