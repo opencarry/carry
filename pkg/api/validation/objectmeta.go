@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/opencarry/carry/pkg/api/meta"
@@ -136,6 +137,66 @@ func ValidateOwnerReferences(ownerReferences []metav1.OwnerReference, fldPath *f
 				controllerName = ref.Name
 			}
 		}
+	}
+	return allErrs
+}
+
+func ValidateObjectMetaUpdate(newMeta, oldMeta *metav1.ObjectMeta, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	newMetadata, err := meta.Accessor(newMeta)
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, newMeta, err.Error()))
+		return allErrs
+	}
+	oldMetadata, err := meta.Accessor(oldMeta)
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, oldMeta, err.Error()))
+		return allErrs
+	}
+
+	return ValidateObjectMetaAccessorUpdate(newMetadata, oldMetadata, fldPath)
+}
+
+// ValidateObjectMetaAccessorUpdate validates an object's metadata when updated.
+func ValidateObjectMetaAccessorUpdate(newMeta, oldMeta metav1.Object, fldPath *field.Path) field.ErrorList {
+	var allErrs field.ErrorList
+	if !oldMeta.GetDeletionTime().IsZero() {
+		// 已删除状态下，某些字段不允许更新
+		// return
+	}
+
+	// Reject updates that don't specify a resource version
+	if len(newMeta.GetResourceVersion()) == 0 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("resource_version"), newMeta.GetResourceVersion(), "must be specified for an update"))
+	}
+
+	// if newMeta.GetUID() != oldMeta.GetUID() {
+	// 	allErrs = append(allErrs, field.Invalid(fldPath.Child("uid"), newMeta.GetUID(), FieldImmutableErrorMsg))
+	// }
+	allErrs = append(allErrs, ValidateImmutableField(newMeta.GetName(), oldMeta.GetName(), fldPath.Child("name"))...)
+	allErrs = append(allErrs, ValidateImmutableField(newMeta.GetNamespace(), oldMeta.GetNamespace(), fldPath.Child("namespace"))...)
+	allErrs = append(allErrs, ValidateImmutableField(newMeta.GetUID(), oldMeta.GetUID(), fldPath.Child("uid"))...)
+	allErrs = append(allErrs, ValidateImmutableField(newMeta.GetCreationTime(), oldMeta.GetCreationTime(), fldPath.Child("creation_time"))...)
+	allErrs = append(allErrs, ValidateImmutableField(newMeta.GetDeletionTime(), oldMeta.GetDeletionTime(), fldPath.Child("deletion_time"))...)
+	allErrs = append(allErrs, ValidateImmutableField(newMeta.GetDeletionGracePeriodSeconds(), oldMeta.GetDeletionGracePeriodSeconds(), fldPath.Child("deletion_grace_period_seconds"))...)
+
+	allErrs = append(allErrs, ValidateLabels(newMeta.GetLabels(), fldPath.Child("labels"))...)
+	allErrs = append(allErrs, ValidateAnnotations(newMeta.GetAnnotations(), fldPath.Child("annotations"))...)
+	allErrs = append(allErrs, ValidateOwnerReferences(newMeta.GetOwnerReferences(), fldPath.Child("owner_references"))...)
+
+	return allErrs
+}
+
+// ValidateImmutableField validates the new value and the old value are deeply equal.
+func ValidateImmutableField(newVal, oldVal interface{}, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	// todo
+	// func(a, b resource.Quantity) bool
+	// func(a, b labels.Selector) bool {
+	// func(a, b fields.Selector) bool {
+	if !reflect.DeepEqual(oldVal, newVal) {
+		allErrs = append(allErrs, field.Invalid(fldPath, newVal, FieldImmutableErrorMsg))
 	}
 	return allErrs
 }

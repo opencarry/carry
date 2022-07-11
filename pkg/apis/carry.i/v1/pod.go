@@ -57,7 +57,7 @@ type PodSpec struct {
 	NodeSelector map[string]string `json:"node_selector,omitempty"`
 
 	// 一组亲和性调度规则
-	Affinity Affinity `json:"affinity,omitempty"`
+	Affinity *Affinity `json:"affinity,omitempty"`
 
 	// Defaults to always
 	RestartPolicy RestartPolicy `json:"restart_policy,omitempty"`

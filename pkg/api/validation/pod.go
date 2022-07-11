@@ -3,7 +3,10 @@ package validation
 import (
 	"fmt"
 	"math"
+	"reflect"
 	"strings"
+
+	"github.com/google/go-cmp/cmp"
 
 	v1 "github.com/opencarry/carry/pkg/apis/carry.i/v1"
 	"github.com/opencarry/carry/pkg/resource"
@@ -52,7 +55,7 @@ func ValidatePodSpec(spec *v1.PodSpec, fldPath *field.Path) field.ErrorList {
 	otherContainers = append(otherContainers, spec.InstallationContainers...)
 	allErrs = append(allErrs, validateUninstallationContainers(spec.UninstallationContainers, otherContainers, vols, fldPath.Child("uninstallation_containers"))...)
 	// affinity
-	allErrs = append(allErrs, validateAffinity(&spec.Affinity, fldPath.Child("affinity"))...)
+	allErrs = append(allErrs, validateAffinity(spec.Affinity, fldPath.Child("affinity"))...)
 	// node_name
 	if len(spec.NodeName) > 0 {
 		for _, msg := range ValidateNodeName(spec.NodeName, false) {
@@ -576,4 +579,156 @@ func ValidateSecurityContext(sc *v1.SecurityContext, fldPath *field.Path) field.
 	}
 
 	return allErrs
+}
+
+func ValidatePodUpdate(newPod, oldPod *v1.Pod) field.ErrorList {
+	fldPath := field.NewPath("metadata")
+	allErrs := ValidateObjectMetaUpdate(&newPod.ObjectMeta, &oldPod.ObjectMeta, fldPath)
+	allErrs = append(allErrs, ValidatePodSpecificAnnotationUpdates(newPod, oldPod, fldPath.Child("annotations"))...)
+	specPath := field.NewPath("spec")
+	// validate updatable fields:
+	// 1.  spec.containers[*].image
+	// 2.  spec.initContainers[*].image
+	// 3.  spec.InstallationContainers[*].image
+	// 4.  spec.UninstallationContainers[*].image
+	// 5.  spec.activeDeadlineSeconds
+	// 6.  spec.terminationGracePeriodSeconds
+	containerErrs, stop := ValidateContainerUpdates(newPod.Spec.Containers, oldPod.Spec.Containers, specPath.Child("containers"))
+	allErrs = append(allErrs, containerErrs...)
+	if stop {
+		return allErrs
+	}
+	containerErrs, stop = ValidateContainerUpdates(newPod.Spec.InitContainers, oldPod.Spec.InitContainers, specPath.Child("init_containers"))
+	allErrs = append(allErrs, containerErrs...)
+	if stop {
+		return allErrs
+	}
+	containerErrs, stop = ValidateContainerUpdates(newPod.Spec.InstallationContainers, oldPod.Spec.InstallationContainers, specPath.Child("installation_containers"))
+	allErrs = append(allErrs, containerErrs...)
+	if stop {
+		return allErrs
+	}
+	containerErrs, stop = ValidateContainerUpdates(newPod.Spec.UninstallationContainers, oldPod.Spec.UninstallationContainers, specPath.Child("uninstallation_containers"))
+	allErrs = append(allErrs, containerErrs...)
+	if stop {
+		return allErrs
+	}
+
+	// validate updated spec.activeDeadlineSeconds.  two types of updates are allowed:
+	// 1.  from nil to a positive value
+	// 2.  from a positive value to a lesser, non-negative value
+	if newPod.Spec.ActiveDeadlineSeconds != nil {
+		newActiveDeadlineSeconds := *newPod.Spec.ActiveDeadlineSeconds
+		if newActiveDeadlineSeconds < 0 || newActiveDeadlineSeconds > math.MaxInt32 {
+			allErrs = append(allErrs, field.Invalid(specPath.Child("active_deadline_seconds"), newActiveDeadlineSeconds, validation.InclusiveRangeError(0, math.MaxInt32)))
+			return allErrs
+		}
+		if oldPod.Spec.ActiveDeadlineSeconds != nil {
+			oldActiveDeadlineSeconds := *oldPod.Spec.ActiveDeadlineSeconds
+			if oldActiveDeadlineSeconds < newActiveDeadlineSeconds {
+				allErrs = append(allErrs, field.Invalid(specPath.Child("active_deadline_seconds"), newActiveDeadlineSeconds, "must be less than or equal to previous value"))
+				return allErrs
+			}
+		}
+	} else if oldPod.Spec.ActiveDeadlineSeconds != nil {
+		allErrs = append(allErrs, field.Invalid(specPath.Child("active_deadline_seconds"), newPod.Spec.ActiveDeadlineSeconds, "must not update from a positive integer to nil value"))
+	}
+
+	// the last thing to check is pod spec equality.  If the pod specs are equal, then we can simply return the errors we have
+	// so far and save the cost of a deep copy.
+	if reflect.DeepEqual(newPod.Spec, oldPod.Spec) {
+		return allErrs
+	}
+
+	// handle updatable fields by munging those fields prior to deep equal comparison.
+	mungedPodSpec := *newPod.Spec.DeepCopy()
+	// munged spec.containers[*].image
+	var newContainers []v1.Container
+	for ix, container := range mungedPodSpec.Containers {
+		container.Image = oldPod.Spec.Containers[ix].Image
+		newContainers = append(newContainers, container)
+	}
+	mungedPodSpec.Containers = newContainers
+	// munged spec.initContainers[*].image
+	var newInitContainers []v1.Container
+	for ix, container := range mungedPodSpec.InitContainers {
+		container.Image = oldPod.Spec.InitContainers[ix].Image
+		newInitContainers = append(newInitContainers, container)
+	}
+	mungedPodSpec.InitContainers = newInitContainers
+	// munged spec.initContainers[*].image
+	var newInstallationContainers []v1.Container
+	for ix, container := range mungedPodSpec.InstallationContainers {
+		container.Image = oldPod.Spec.InstallationContainers[ix].Image
+		newInstallationContainers = append(newInstallationContainers, container)
+	}
+	mungedPodSpec.InstallationContainers = newInstallationContainers
+	// munged spec.initContainers[*].image
+	var newUninstallationContainers []v1.Container
+	for ix, container := range mungedPodSpec.UninstallationContainers {
+		container.Image = oldPod.Spec.UninstallationContainers[ix].Image
+		newUninstallationContainers = append(newUninstallationContainers, container)
+	}
+	mungedPodSpec.UninstallationContainers = newUninstallationContainers
+
+	// munged spec.activeDeadlineSeconds
+	mungedPodSpec.ActiveDeadlineSeconds = nil
+	if oldPod.Spec.ActiveDeadlineSeconds != nil {
+		activeDeadlineSeconds := *oldPod.Spec.ActiveDeadlineSeconds
+		mungedPodSpec.ActiveDeadlineSeconds = &activeDeadlineSeconds
+	}
+
+	// Relax validation of immutable fields to allow it to be set to 1 if it was previously negative.
+	if oldPod.Spec.TerminationGracePeriodSeconds != nil && *oldPod.Spec.TerminationGracePeriodSeconds < 0 &&
+		mungedPodSpec.TerminationGracePeriodSeconds != nil && *mungedPodSpec.TerminationGracePeriodSeconds == 1 {
+		mungedPodSpec.TerminationGracePeriodSeconds = oldPod.Spec.TerminationGracePeriodSeconds
+	}
+
+	if !reflect.DeepEqual(mungedPodSpec, oldPod.Spec) {
+		specDiff := cmp.Diff(oldPod.Spec, mungedPodSpec)
+		allErrs = append(allErrs, field.Forbidden(specPath, fmt.Sprintf("pod updates may not change fields other than `spec.containers[*].image`, `spec.init_containers[*].image`, `spec.active_deadline_seconds` or `spec.termination_grace_period_seconds` (allow it to be set to 1 if it was previously negative)\n%v", specDiff)))
+	}
+
+	return allErrs
+}
+
+func ValidatePodSpecificAnnotationUpdates(newPod, oldPod *v1.Pod, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	newAnnotations := newPod.Annotations
+	oldAnnotations := oldPod.Annotations
+	for k, oldVal := range oldAnnotations {
+		if newVal, exists := newAnnotations[k]; exists && newVal == oldVal {
+			continue // No change.
+		}
+		// special keys
+	}
+	// Check for additions
+	for k := range newAnnotations {
+		if _, ok := oldAnnotations[k]; ok {
+			continue // No change.
+		}
+		// special keys
+	}
+	allErrs = append(allErrs, ValidatePodSpecificAnnotations(newAnnotations, &newPod.Spec, fldPath)...)
+	return allErrs
+}
+
+func ValidateContainerUpdates(newContainers, oldContainers []v1.Container, fldPath *field.Path) (allErrs field.ErrorList, stop bool) {
+	allErrs = field.ErrorList{}
+	if len(newContainers) != len(oldContainers) {
+		allErrs = append(allErrs, field.Forbidden(fldPath, "pod updates may not add or remove containers"))
+		return allErrs, true
+	}
+
+	// validate updated container images
+	for i, ctr := range newContainers {
+		if len(ctr.Image) == 0 {
+			allErrs = append(allErrs, field.Required(fldPath.Index(i).Child("image"), ""))
+		}
+		// this is only called from ValidatePodUpdate so its safe to check leading/trailing whitespace.
+		if len(strings.TrimSpace(ctr.Image)) != len(ctr.Image) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(i).Child("image"), ctr.Image, "must not have leading or trailing whitespace"))
+		}
+	}
+	return allErrs, false
 }
