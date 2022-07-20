@@ -1,6 +1,9 @@
 package v1
 
-import "github.com/opencarry/carry/pkg/resource"
+import (
+	"github.com/opencarry/carry/pkg/resource"
+	"github.com/opencarry/carry/pkg/runtime/schema"
+)
 
 const (
 	DefaultTerminationGracePeriodSeconds = 30
@@ -104,9 +107,15 @@ type ObjectReference struct {
 	FieldPath string `json:"field_path,omitempty"`
 }
 
-func (o ObjectReference) GetObjectKind() string {
-	return o.Kind
+func (obj *ObjectReference) SetGroupVersionKind(gvk schema.GroupVersionKind) {
+	obj.APIVersion, obj.Kind = gvk.ToAPIVersionAndKind()
 }
+
+func (obj *ObjectReference) GroupVersionKind() schema.GroupVersionKind {
+	return schema.FromAPIVersionAndKind(obj.APIVersion, obj.Kind)
+}
+
+func (obj *ObjectReference) GetObjectKind() schema.ObjectKind { return obj }
 
 type Binding struct {
 	TypeMeta   `json:",inline"`

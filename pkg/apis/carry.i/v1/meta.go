@@ -3,6 +3,8 @@ package v1
 import (
 	"fmt"
 	"time"
+
+	"github.com/opencarry/carry/pkg/runtime/schema"
 )
 
 type ObjectMetaAccessor interface {
@@ -48,6 +50,8 @@ type ListInterface interface {
 	SetResourceVersion(version string)
 	GetContinue() string
 	SetContinue(c string)
+	GetRemainingItemCount() *int64
+	SetRemainingItemCount(c *int64)
 }
 
 type Type interface {
@@ -66,8 +70,16 @@ type TypeMeta struct {
 	APIVersion string `json:"api_version,omitempty"`
 }
 
-func (t *TypeMeta) GetObjectKind() string {
-	return t.Kind
+func (obj *TypeMeta) GetObjectKind() schema.ObjectKind { return obj }
+
+// SetGroupVersionKind satisfies the ObjectKind interface for all objects that embed TypeMeta
+func (obj *TypeMeta) SetGroupVersionKind(gvk schema.GroupVersionKind) {
+	obj.APIVersion, obj.Kind = gvk.ToAPIVersionAndKind()
+}
+
+// GroupVersionKind satisfies the ObjectKind interface for all objects that embed TypeMeta
+func (obj *TypeMeta) GroupVersionKind() schema.GroupVersionKind {
+	return schema.FromAPIVersionAndKind(obj.APIVersion, obj.Kind)
 }
 
 type ListMeta struct {
