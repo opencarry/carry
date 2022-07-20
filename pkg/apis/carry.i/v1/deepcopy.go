@@ -1,5 +1,72 @@
 package v1
 
+func (in *ObjectMeta) DeepCopy() *ObjectMeta {
+	if in == nil {
+		return nil
+	}
+	out := new(ObjectMeta)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *ObjectMeta) DeepCopyInto(out *ObjectMeta) {
+	*out = *in
+	if in.DeletionGracePeriodSeconds != nil {
+		in, out := &in.DeletionGracePeriodSeconds, &out.DeletionGracePeriodSeconds
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(int64)
+			**out = **in
+		}
+	}
+	if in.Labels != nil {
+		in, out := &in.Labels, &out.Labels
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.Annotations != nil {
+		in, out := &in.Annotations, &out.Annotations
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.OwnerReferences != nil {
+		in, out := &in.OwnerReferences, &out.OwnerReferences
+		*out = make([]OwnerReference, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	return
+}
+
+func (in *OwnerReference) DeepCopy() *OwnerReference {
+	if in == nil {
+		return nil
+	}
+	out := new(OwnerReference)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *OwnerReference) DeepCopyInto(out *OwnerReference) {
+	*out = *in
+	if in.Controller != nil {
+		in, out := &in.Controller, &out.Controller
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(bool)
+			**out = **in
+		}
+	}
+	return
+}
+
 // DeepCopy copying the receiver, creating a new PodSpec.
 func (in *PodSpec) DeepCopy() *PodSpec {
 	if in == nil {
@@ -384,6 +451,146 @@ func (in *VolumeMount) DeepCopy() *VolumeMount {
 }
 
 func (in *VolumeMount) DeepCopyInto(out *VolumeMount) {
+	*out = *in
+	return
+}
+
+func (in *ReplicaSet) DeepCopy() *ReplicaSet {
+	if in == nil {
+		return nil
+	}
+	out := new(ReplicaSet)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *ReplicaSet) DeepCopyInto(out *ReplicaSet) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
+	return
+}
+
+func (in *ReplicaSetSpec) DeepCopy() *ReplicaSetSpec {
+	if in == nil {
+		return nil
+	}
+	out := new(ReplicaSetSpec)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *ReplicaSetSpec) DeepCopyInto(out *ReplicaSetSpec) {
+	*out = *in
+	if in.Replicas != nil {
+		in, out := &in.Replicas, &out.Replicas
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(int64)
+			**out = **in
+		}
+	}
+	if in.Selector != nil {
+		in, out := &in.Selector, &out.Selector
+		if *in == nil {
+			*out = nil
+		} else {
+			*out = new(LabelSelector)
+			(*in).DeepCopyInto(*out)
+		}
+	}
+	in.Template.DeepCopyInto(&out.Template)
+	return
+}
+
+func (in *PodTemplateSpec) DeepCopyInto(out *PodTemplateSpec) {
+	*out = *in
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	return
+}
+
+func (in *LabelSelector) DeepCopy() *LabelSelector {
+	if in == nil {
+		return nil
+	}
+	out := new(LabelSelector)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *LabelSelector) DeepCopyInto(out *LabelSelector) {
+	*out = *in
+	if in.MatchLabels != nil {
+		in, out := &in.MatchLabels, &out.MatchLabels
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
+	if in.MatchExpressions != nil {
+		in, out := &in.MatchExpressions, &out.MatchExpressions
+		*out = make([]LabelSelectorRequirement, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	return
+}
+
+func (in *LabelSelectorRequirement) DeepCopy() *LabelSelectorRequirement {
+	if in == nil {
+		return nil
+	}
+	out := new(LabelSelectorRequirement)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *LabelSelectorRequirement) DeepCopyInto(out *LabelSelectorRequirement) {
+	*out = *in
+	if in.Values != nil {
+		in, out := &in.Values, &out.Values
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	return
+}
+
+func (in *ReplicaSetStatus) DeepCopy() *ReplicaSetStatus {
+	if in == nil {
+		return nil
+	}
+	out := new(ReplicaSetStatus)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *ReplicaSetStatus) DeepCopyInto(out *ReplicaSetStatus) {
+	*out = *in
+	if in.Conditions != nil {
+		in, out := &in.Conditions, &out.Conditions
+		*out = make([]ReplicaSetCondition, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	return
+}
+
+func (in *ReplicaSetCondition) DeepCopy() *ReplicaSetCondition {
+	if in == nil {
+		return nil
+	}
+	out := new(ReplicaSetCondition)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *ReplicaSetCondition) DeepCopyInto(out *ReplicaSetCondition) {
 	*out = *in
 	return
 }

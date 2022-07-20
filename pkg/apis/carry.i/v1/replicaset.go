@@ -1,8 +1,6 @@
 package v1
 
-import (
-	"time"
-)
+import "time"
 
 type ReplicaSet struct {
 	TypeMeta   `json:",omitempty"`
@@ -29,6 +27,8 @@ type ReplicaSetSpec struct {
 	Replicas *int64 `json:"replicas,omitempty"`
 	// strategy to use to replace existing pods.
 	Strategy ReplicaSetStrategy `json:"strategy,omitempty"`
+	// default to 0
+	MinReadySeconds int64 `json:"min_ready_seconds,omitempty"`
 }
 
 type ReplicaSetStrategy struct {
@@ -44,10 +44,14 @@ const (
 )
 
 type ReplicaSetStatus struct {
-	Replicas             int `json:"replicas,omitempty"`
-	FullyLabeledReplicas int `json:"fully_labeled_replicas,omitempty"`
-	UpdatedReplicas      int `json:"updated_replicas,omitempty"`
-	ReadyReplicas        int `json:"ready_replicas,omitempty"`
+	Replicas             int64 `json:"replicas,omitempty"`
+	FullyLabeledReplicas int64 `json:"fully_labeled_replicas,omitempty"`
+	UpdatedReplicas      int64 `json:"updated_replicas,omitempty"`
+	ReadyReplicas        int64 `json:"ready_replicas,omitempty"`
+	AvailableReplicas    int64 `json:"available_replicas,omitempty"`
+
+	// ObservedGeneration reflects the generation of the most recently observed ReplicaSet.
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 
 	Conditions []ReplicaSetCondition `json:"conditions,omitempty"`
 }

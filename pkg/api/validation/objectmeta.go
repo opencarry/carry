@@ -5,14 +5,13 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/opencarry/carry/pkg/api/meta"
 	metav1 "github.com/opencarry/carry/pkg/apis/carry.i/v1"
 	"github.com/opencarry/carry/pkg/util/validation"
 	"github.com/opencarry/carry/pkg/util/validation/field"
 )
 
 func ValidateObjectMeta(objMeta *metav1.ObjectMeta, requiresNamespace bool, nameFn ValidateNameFunc, fldPath *field.Path) field.ErrorList {
-	metadata, err := meta.Accessor(objMeta)
+	metadata, err := metav1.Accessor(objMeta)
 	if err != nil {
 		allErrs := field.ErrorList{}
 		allErrs = append(allErrs, field.Invalid(fldPath, objMeta, err.Error()))
@@ -144,12 +143,12 @@ func ValidateOwnerReferences(ownerReferences []metav1.OwnerReference, fldPath *f
 func ValidateObjectMetaUpdate(newMeta, oldMeta *metav1.ObjectMeta, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	newMetadata, err := meta.Accessor(newMeta)
+	newMetadata, err := metav1.Accessor(newMeta)
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath, newMeta, err.Error()))
 		return allErrs
 	}
-	oldMetadata, err := meta.Accessor(oldMeta)
+	oldMetadata, err := metav1.Accessor(oldMeta)
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath, oldMeta, err.Error()))
 		return allErrs

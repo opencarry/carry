@@ -1,6 +1,9 @@
 package v1
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type ObjectMetaAccessor interface {
 	GetObjectMeta() Object
@@ -131,6 +134,11 @@ type ObjectMeta struct {
 	// 为了区别同样name的资源，比如有个name=foo的Pod被删除后，又创建一个同名的Pod
 	// 不允许更新
 	UID UID `json:"uid,omitempty"`
+
+	// A sequence number representing a specific generation of the desired state.
+	// 由服务器端设置，不允许更新
+	// 可选
+	Generation int64 `json:"generation,omitempty"`
 }
 
 func (meta *ObjectMeta) GetObjectMeta() Object { return meta }
@@ -197,4 +205,36 @@ type OwnerReference struct {
 	UID        UID    `json:"uid"`
 	// 控制器类资源只能有一个
 	Controller *bool `json:"controller,omitempty"`
+}
+
+var errNotList = fmt.Errorf("object does not implement the List interfaces")
+
+func ListAccessor(obj interface{}) (ListInterface, error) {
+	switch t := obj.(type) {
+	case ListInterface:
+		return t, nil
+	case ListMetaAccessor:
+		if m := t.GetListMeta(); m != nil {
+			return m, nil
+		}
+		return nil, errNotList
+	default:
+		return nil, errNotList
+	}
+}
+
+var errNotObject = fmt.Errorf("object does not implement the Object interfaces")
+
+func Accessor(obj interface{}) (Object, error) {
+	switch t := obj.(type) {
+	case Object:
+		return t, nil
+	case ObjectMetaAccessor:
+		if m := t.GetObjectMeta(); m != nil {
+			return m, nil
+		}
+		return nil, errNotObject
+	default:
+		return nil, errNotObject
+	}
 }

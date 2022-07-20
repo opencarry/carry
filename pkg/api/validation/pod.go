@@ -17,6 +17,8 @@ import (
 
 var ValidateNodeName = NameIsDNSSubdomain
 
+var ValidatePodName = NameIsDNSSubdomain
+
 func ValidatePod(pod *v1.Pod) field.ErrorList {
 	fldPath := field.NewPath("metadata")
 	allErrs := ValidateObjectMeta(&pod.ObjectMeta, true, NameIsDNSSubdomain, fldPath)
