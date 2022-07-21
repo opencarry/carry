@@ -4,6 +4,13 @@ import (
 	"time"
 )
 
+const (
+	// EventTypeNormal Information only and will not cause any problems
+	EventTypeNormal string = "normal"
+	// EventTypeWarning These events are to warn that something might go wrong
+	EventTypeWarning string = "warning"
+)
+
 type Event struct {
 	TypeMeta       `json:",inline"`
 	ObjectMeta     `json:"metadata,omitempty"`
