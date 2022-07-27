@@ -53,6 +53,8 @@ type DeploymentStatus struct {
 	ReadyReplicas   int `json:"ready_replicas,omitempty"`
 
 	Conditions []DeploymentCondition `json:"conditions,omitempty"`
+	// The generation observed by the deployment controller.
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 type DeploymentCondition struct {

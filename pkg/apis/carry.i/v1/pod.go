@@ -4,6 +4,10 @@ import (
 	"time"
 )
 
+const (
+	DefaultDeploymentUniqueLabelKey string = "pod-template-hash"
+)
+
 type Pod struct {
 	TypeMeta   `json:",omitempty"`
 	ObjectMeta `json:"metadata,omitempty"`
@@ -320,9 +324,10 @@ type PodCondition struct {
 
 type ContainerStatus struct {
 	// DNS_LABEL, 在同一个pod中必须是唯一的
-	Name  string `json:"name"`
-	Pid   *int64 `json:"pid,omitempty"`
-	Image string `json:"image"`
+	Name        string `json:"name"`
+	ContainerId string `json:"container_id"`
+	Pid         *int64 `json:"pid,omitempty"`
+	Image       string `json:"image"`
 	// sha256:xxx
 	ImageId string `json:"image_id,omitempty"`
 	//
