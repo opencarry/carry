@@ -29,6 +29,8 @@ type StatefulSetSpec struct {
 	Strategy StatefulSetStrategy `json:"strategy,omitempty"`
 	// optional, defaults to 10
 	RevisionHistoryLimit *int64 `json:"revision_history_limit,omitempty"`
+
+	ServiceName string `json:"service_name,omitempty"`
 }
 
 type StatefulSetStrategy struct {
@@ -45,17 +47,21 @@ const (
 
 type StatefulSetStatus struct {
 	// replicas is the number of Pods created by the StatefulSet controller.
-	Replicas int `json:"replicas,omitempty"`
+	Replicas int64 `json:"replicas,omitempty"`
 	// readyReplicas is the number of pods created for this StatefulSet with a Ready Condition.
-	ReadyReplicas int `json:"ready_replicas,omitempty"`
+	ReadyReplicas int64 `json:"ready_replicas,omitempty"`
 	// currentReplicas is the number of Pods created by the StatefulSet controller from the StatefulSet version indicated by currentRevision.
-	CurrentReplicas int `json:"current_replicas,omitempty"`
+	CurrentReplicas int64 `json:"current_replicas,omitempty"`
 	// updatedReplicas is the number of Pods created by the StatefulSet controller from the StatefulSet version indicated by updateRevision.
-	UpdatedReplicas int `json:"updated_replicas,omitempty"`
+	UpdatedReplicas int64 `json:"updated_replicas,omitempty"`
 	// currentRevision, if not empty, indicates the version of the StatefulSet used to generate Pods in the sequence [0,currentReplicas).
 	CurrentRevision string `json:"current_revision,omitempty"`
 	// updateRevision, if not empty, indicates the version of the StatefulSet used to generate Pods in the sequence [replicas-updatedReplicas,replicas)
 	UpdateRevision string `json:"update_revision,omitempty"`
+
+	ObservedGeneration *int64 `json:"observed_generation,omitempty"`
+
+	CollisionCount *int64 `json:"collision_count,omitempty"`
 
 	Conditions []StatefulSetCondition `json:"conditions,omitempty"`
 }

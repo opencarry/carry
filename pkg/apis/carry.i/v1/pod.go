@@ -82,6 +82,10 @@ type PodSpec struct {
 
 	// 可选，默认 default-scheduler
 	SchedulerName string `json:"scheduler_name,omitempty"`
+
+	Hostname string `json:"hostname,omitempty"`
+
+	Subdomain string `json:"subdomain,omitempty"`
 }
 
 type RestartPolicy string
